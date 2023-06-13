@@ -1,0 +1,30 @@
+#!/usr/bin/fift -s
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ dup ";" $Pos $Split 2 $Split nip swap } : first-line
+{ <b 1 8 u, swap $>B B, b> } : offchain-token-data
+
+"collection-data.txt" file>B B>$
+first-line $>smca 2drop 2constant owner-addr
+first-line $>smca 2drop 2constant jwallet-addr
+first-line (number) ?dup 0= abort"not a valid Gram amount" 1- { Gram swap */r } { Gram * } cond constant mint-price
+
+first-line constant collection-json
+first-line constant collection-base
+
+"build/nft-item-code.fif" include constant nft_code
+
+<b
+  owner-addr Addr, // owner address
+  jwallet-addr Addr, // jetton wallet address
+  0 64 u, // start nft index
+  mint-price Gram,
+
+  <b
+    collection-json offchain-token-data ref, // Storing common ref
+    <b collection-base $>B B, b> ref,
+  b> ref, // content cell
+
+  nft_code ref, // nft code
+b> boc>B Bx. cr

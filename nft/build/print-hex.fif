@@ -2,11 +2,6 @@
 "TonUtil.fif" include
 "Asm.fif" include
 
-."nft-collection:" cr
-
-"nft-collection-code.fif" include
-2 boc+>B dup Bx. cr cr
-
 ."nft-collection-editable:" cr
 
 "nft-collection-editable-code.fif" include
@@ -15,14 +10,4 @@
 ."nft:" cr
 
 "nft-item-code.fif" include
-2 boc+>B dup Bx. cr cr
-
-."nft-marketplace:" cr
-
-"nft-marketplace-code.fif" include
-2 boc+>B dup Bx. cr cr
-
-."nft-sale:" cr
-
-"nft-sale-code.fif" include
 2 boc+>B dup Bx. cr cr

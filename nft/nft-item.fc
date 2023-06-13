@@ -1,20 +1,9 @@
 ;;
 ;;  TON NFT Item Smart Contract
+;;  Edits: no content, transfer notification on mint
 ;;
 
-{-
-
-    NOTE that this tokens can be transferred within the same workchain.
-
-    This is suitable for most tokens, if you need tokens transferable between workchains there are two solutions:
-
-    1) use more expensive but universal function to calculate message forward fee for arbitrary destination (see `misc/forward-fee-calc.cs`)
-
-    2) use token holder proxies in target workchain (that way even 'non-universal' token can be used from any workchain)
-
--}
-
-int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
+int min_tons_for_storage() asm "25000000 PUSHINT"; ;; 0.025 TON
 
 ;;
 ;;  Storage
@@ -22,29 +11,42 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;  uint64 index
 ;;  MsgAddressInt collection_address
 ;;  MsgAddressInt owner_address
-;;  cell content
 ;;
 
-(int, int, slice, slice, cell) load_data() {
+(int, int, slice, slice) load_data() {
     slice ds = get_data().begin_parse();
     var (index, collection_address) = (ds~load_uint(64), ds~load_msg_addr());
     if (ds.slice_bits() > 0) {
-      return (-1, index, collection_address, ds~load_msg_addr(), ds~load_ref());
+      return (-1, index, collection_address, ds~load_msg_addr());
     } else {  
-      return (0, index, collection_address, null(), null()); ;; nft not initialized yet
+      return (0, index, collection_address, null()); ;; nft not initialized yet
     }
 }
 
-() store_data(int index, slice collection_address, slice owner_address, cell content) impure {
+() store_data(int index, slice collection_address, slice owner_address) impure {
     set_data(
         begin_cell()
             .store_uint(index, 64)
             .store_slice(collection_address)
             .store_slice(owner_address)
-            .store_ref(content)
             .end_cell()
     );
 }
+
+slice to_string(int n) inline {
+  builder b = begin_cell();
+  tuple chars = null();
+  do {
+    int r = n~divmod(10);
+    chars = cons(r + "0"u, chars);
+  } until (n == 0);
+  do {
+    int char = chars~list_next();
+    b~store_uint(char, 8);
+  } until (null?(chars));
+  return b.end_cell().begin_parse();
+}
+
 
 () send_msg(slice to_address, int amount, int op, int query_id, builder payload, int send_mode) impure inline {
   var msg = begin_cell()
@@ -62,7 +64,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
   send_raw_message(msg.end_cell(), send_mode);
 }
 
-() transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, cell content, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
+() transfer_ownership(int my_balance, int index, slice collection_address, slice owner_address, slice sender_address, int query_id, slice in_msg_body, int fwd_fees) impure inline {
     throw_unless(401, equal_slices(sender_address, owner_address));
 
     slice new_owner_address = in_msg_body~load_msg_addr();
@@ -91,7 +93,22 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
       send_msg(response_destination, rest_amount, op::excesses(), query_id, null(), 1); ;; paying fees, revert on errors
     }
 
-    store_data(index, collection_address, new_owner_address, content);
+    store_data(index, collection_address, new_owner_address);
+}
+
+() send_transfer_notification(slice to_address, slice from_address, int my_balance, int query_id, int fwd_fee) impure inline {
+    int rest_amount = my_balance - min_tons_for_storage() - fwd_fee;
+    if (rest_amount > 0) {
+        var msg = begin_cell()
+                   .store_uint(0x10, 6)
+                   .store_slice(to_address)
+                   .store_coins(rest_amount)
+                   .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+                   .store_uint(op::ownership_assigned(), 32)
+                   .store_uint(query_id, 64)
+                   .store_slice(from_address);
+        send_raw_message(msg.end_cell(), 1);
+    }
 }
 
 () recv_internal(int my_balance, int msg_value, cell in_msg_full, slice in_msg_body) impure {
@@ -113,11 +130,12 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     cs~load_coins(); ;; skip ihr_fee
     int fwd_fee = muldiv(cs~load_coins(), 3, 2); ;; we use message fwd_fee for estimation of forward_payload costs
 
-
-    (int init?, int index, slice collection_address, slice owner_address, cell content) = load_data();
+    (int init?, int index, slice collection_address, slice owner_address) = load_data();
     if (~ init?) {
       throw_unless(405, equal_slices(collection_address, sender_address));
-      store_data(index, collection_address, in_msg_body~load_msg_addr(), in_msg_body~load_ref());
+      slice new_owner_address = in_msg_body~load_msg_addr();
+      send_transfer_notification(new_owner_address, collection_address, my_balance, 0, fwd_fee);
+      store_data(index, collection_address, new_owner_address);
       return ();
     }
 
@@ -125,7 +143,7 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
     int query_id = in_msg_body~load_uint(64);
 
     if (op == op::transfer()) {
-      transfer_ownership(my_balance, index, collection_address, owner_address, content, sender_address, query_id, in_msg_body, fwd_fee);
+      transfer_ownership(my_balance, index, collection_address, owner_address, sender_address, query_id, in_msg_body, fwd_fee);
       return ();
     }
     if (op == op::get_static_data()) {
@@ -140,6 +158,13 @@ int min_tons_for_storage() asm "50000000 PUSHINT"; ;; 0.05 TON
 ;;
 
 (int, int, slice, slice, cell) get_nft_data() method_id {
-  (int init?, int index, slice collection_address, slice owner_address, cell content) = load_data();
-  return (init?, index, collection_address, owner_address, content);
+    (int init?, int index, slice collection_address, slice owner_address) = load_data();
+
+    slice str_index = to_string(index);
+    cell content = begin_cell()
+                     .store_slice(str_index)
+                     .store_slice(".json")
+                   .end_cell();
+
+    return (init?, index, collection_address, owner_address, content);
 }

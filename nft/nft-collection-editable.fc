@@ -1,6 +1,6 @@
 ;;
 ;; NFT collection smart contract
-;; Edits: mint on recieving jettons, deploying nft without content
+;; Edits: mint on recieving jettons, deploying nft without content, withdrawing jettons
 ;;
 
 const int deploy_amount = 50000000; ;; 0.05 TON
@@ -93,12 +93,35 @@ slice calculate_nft_item_address(int wc, cell state_init) {
 
     if (op == 3) { ;; change owner
       slice new_owner = in_msg_body~load_msg_addr();
-      save_data(new_owner, jwallet_address, next_item_index, mint_price, content, nft_item_code);
+      slice new_jwallet = in_msg_body~load_msg_addr();
+      save_data(new_owner, new_jwallet, next_item_index, mint_price, content, nft_item_code);
       return ();
     }
     if (op == 4) { ;; change content
       save_data(owner_address, jwallet_address, next_item_index, mint_price, in_msg_body~load_ref(), nft_item_code);
       return ();
+    }
+    if(op == 5) { ;; withdraw jettons
+      int amount =  in_msg_body~load_coins();
+      cell custom_payload = in_msg_body~load_maybe_ref();
+      var msg = begin_cell()
+              .store_uint(0x18, 6)
+              .store_slice(jwallet_address)
+              .store_coins(0)
+              .store_uint(1, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+              .store_ref(
+                begin_cell()
+                .store_uint(0xf8a7ea5, 32)
+                .store_uint(query_id, 64)
+                .store_coins(amount)
+                .store_slice(owner_address)
+                .store_slice(owner_address)
+                .store_maybe_ref(custom_payload)
+                .store_coins(0)
+                .store_int(false, 1)
+                .end_cell()
+              );
+      return send_raw_message(msg.end_cell(), 64);
     }
     throw(0xffff);
 }

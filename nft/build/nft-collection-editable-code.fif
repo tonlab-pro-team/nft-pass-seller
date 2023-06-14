@@ -120,69 +120,121 @@ PROGRAM{
     IFJMP:<{	//  my_balance in_msg_body cs
       3 BLKDROP	// 
     }>	//  my_balance in_msg_body cs
-    LDMSGADDR	//  my_balance in_msg_body _74 _73
+    LDMSGADDR	//  my_balance in_msg_body _128 _127
     DROP	//  my_balance in_msg_body sender_address
     SWAP	//  my_balance sender_address in_msg_body
     32 LDU	//  my_balance sender_address op in_msg_body
-    64 LDU	//  my_balance sender_address op _78 _77
-    NIP	//  my_balance sender_address op in_msg_body
-    load_data INLINECALLDICT	//  my_balance sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
-    s7 PUSH
-    1935855772 PUSHINT	//  my_balance sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code op _30=1935855772
-    EQUAL	//  my_balance sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code _31
-    IFJMP:<{	//  my_balance sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
-      s7 POP	//  my_balance sender_address nft_item_code in_msg_body owner_address jwallet_address next_item_index mint_price content
-      s7 s3 XCPU	//  my_balance content nft_item_code in_msg_body owner_address jwallet_address next_item_index mint_price sender_address jwallet_address
-      SDEQ	//  my_balance content nft_item_code in_msg_body owner_address jwallet_address next_item_index mint_price _33
+    64 LDU	//  my_balance sender_address op query_id in_msg_body
+    load_data INLINECALLDICT	//  my_balance sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
+    s8 PUSH
+    1935855772 PUSHINT	//  my_balance sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code op _30=1935855772
+    EQUAL	//  my_balance sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code _31
+    IFJMP:<{	//  my_balance sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
+      s7 POP
+      s7 POP	//  my_balance sender_address content nft_item_code in_msg_body owner_address jwallet_address next_item_index mint_price
+      s7 s2 XCPU	//  my_balance mint_price content nft_item_code in_msg_body owner_address jwallet_address next_item_index sender_address jwallet_address
+      SDEQ	//  my_balance mint_price content nft_item_code in_msg_body owner_address jwallet_address next_item_index _33
       800 THROWIFNOT
-      s0 s4 XCHG	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index in_msg_body
-      LDVARUINT16	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index jetton_amount in_msg_body
-      s1 s5 XCPU	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index in_msg_body jetton_amount mint_price
-      EQUAL	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index in_msg_body _39
+      s0 s3 XCHG	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address in_msg_body
+      LDVARUINT16	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address jetton_amount in_msg_body
+      s1 s7 XCPU	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address in_msg_body jetton_amount mint_price
+      EQUAL	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address in_msg_body _39
       801 THROWIFNOT
-      LDMSGADDR	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index _88 _87
-      DROP	//  my_balance content nft_item_code mint_price owner_address jwallet_address next_item_index from_address
+      LDMSGADDR	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address _142 _141
+      DROP	//  my_balance mint_price content nft_item_code next_item_index owner_address jwallet_address from_address
       s0 s7 XCHG
-      100000000 PUSHINT	//  from_address content nft_item_code mint_price owner_address jwallet_address next_item_index my_balance _47
-      GEQ	//  from_address content nft_item_code mint_price owner_address jwallet_address next_item_index _48
+      100000000 PUSHINT	//  from_address mint_price content nft_item_code next_item_index owner_address jwallet_address my_balance _47
+      GEQ	//  from_address mint_price content nft_item_code next_item_index owner_address jwallet_address _48
       802 THROWIFNOT
-      50000000 PUSHINT	//  from_address content nft_item_code mint_price owner_address jwallet_address next_item_index _50=50000000
-      s5 s1 s(-1) PU2XC
-      s0 s9 XCHG	//  next_item_index content nft_item_code mint_price owner_address jwallet_address next_item_index nft_item_code _50=50000000 from_address
+      50000000 PUSHINT	//  from_address mint_price content nft_item_code next_item_index owner_address jwallet_address _50=50000000
+      s3 PUSH
+      s5 s(-1) s2 PUXC2
+      s0 s9 XCHG	//  jwallet_address mint_price content nft_item_code next_item_index owner_address next_item_index nft_item_code _50=50000000 from_address
       deploy_nft_item CALLDICT
-      s0 s5 XCHG	//  jwallet_address content nft_item_code mint_price owner_address next_item_index
-      INC	//  jwallet_address content nft_item_code mint_price owner_address next_item_index
-      s5 s3 XCHG2
-      s1 s4 XCHG	//  owner_address jwallet_address next_item_index mint_price content nft_item_code
+      SWAP	//  jwallet_address mint_price content nft_item_code owner_address next_item_index
+      INC	//  jwallet_address mint_price content nft_item_code owner_address next_item_index
+      s3 s3 XCHG2
+      s0 s5 XCHG
+      s4 s1 s4 XCHG3	//  owner_address jwallet_address next_item_index mint_price content nft_item_code
       save_data INLINECALLDICT
-    }>	//  my_balance sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
-    s9 POP	//  nft_item_code sender_address op in_msg_body owner_address jwallet_address next_item_index mint_price content
-    s7 s4 XCPU	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price sender_address owner_address
-    SDEQ	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price _56
+    }>	//  my_balance sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content nft_item_code
+    s10 POP	//  nft_item_code sender_address op query_id in_msg_body owner_address jwallet_address next_item_index mint_price content
+    s8 s4 XCPU	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price sender_address owner_address
+    SDEQ	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price _56
     401 THROWIFNOT
-    s5 PUSH	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price op
-    3 EQINT	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price _59
-    IFJMP:<{	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price
-      s3 POP
-      s4 POP	//  nft_item_code content next_item_index in_msg_body mint_price jwallet_address
-      s0 s2 XCHG	//  nft_item_code content next_item_index jwallet_address mint_price in_msg_body
-      LDMSGADDR	//  nft_item_code content next_item_index jwallet_address mint_price _90 _89
-      DROP	//  nft_item_code content next_item_index jwallet_address mint_price new_owner
-      s1 s4 s5 XCHG3	//  new_owner jwallet_address next_item_index mint_price content nft_item_code
+    s6 PUSH	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price op
+    3 EQINT	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price _59
+    IFJMP:<{	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price
+      s5 POP
+      s5 POP
+      2DROP	//  nft_item_code content next_item_index mint_price in_msg_body
+      LDMSGADDR	//  nft_item_code content next_item_index mint_price new_owner in_msg_body
+      LDMSGADDR	//  nft_item_code content next_item_index mint_price new_owner _146 _145
+      DROP	//  nft_item_code content next_item_index mint_price new_owner new_jwallet
+      s4 s4 XCHG2
+      s0 s5 XCHG	//  new_owner new_jwallet next_item_index mint_price content nft_item_code
       save_data INLINECALLDICT
-    }>	//  nft_item_code content op in_msg_body owner_address jwallet_address next_item_index mint_price
-    s6 POP	//  nft_item_code mint_price op in_msg_body owner_address jwallet_address next_item_index
-    s0 s4 XCHG	//  nft_item_code mint_price next_item_index in_msg_body owner_address jwallet_address op
-    4 EQINT	//  nft_item_code mint_price next_item_index in_msg_body owner_address jwallet_address _65
-    IFJMP:<{	//  nft_item_code mint_price next_item_index in_msg_body owner_address jwallet_address
-      s0 s2 XCHG	//  nft_item_code mint_price next_item_index jwallet_address owner_address in_msg_body
-      LDREF	//  nft_item_code mint_price next_item_index jwallet_address owner_address _92 _91
-      DROP	//  nft_item_code mint_price next_item_index jwallet_address owner_address _66
-      s4 s0 s5 XCHG3	//  owner_address jwallet_address next_item_index mint_price _66 nft_item_code
+    }>	//  nft_item_code content op query_id in_msg_body owner_address jwallet_address next_item_index mint_price
+    s7 POP	//  nft_item_code mint_price op query_id in_msg_body owner_address jwallet_address next_item_index
+    s5 PUSH	//  nft_item_code mint_price op query_id in_msg_body owner_address jwallet_address next_item_index op
+    4 EQINT	//  nft_item_code mint_price op query_id in_msg_body owner_address jwallet_address next_item_index _68
+    IFJMP:<{	//  nft_item_code mint_price op query_id in_msg_body owner_address jwallet_address next_item_index
+      s4 POP
+      s4 POP	//  nft_item_code mint_price jwallet_address next_item_index in_msg_body owner_address
+      SWAP	//  nft_item_code mint_price jwallet_address next_item_index owner_address in_msg_body
+      LDREF	//  nft_item_code mint_price jwallet_address next_item_index owner_address _148 _147
+      DROP	//  nft_item_code mint_price jwallet_address next_item_index owner_address _69
+      s1 s5 XCHG
+      s3 s4 XCHG
+      s3 s0 s0 XCHG3	//  owner_address jwallet_address next_item_index mint_price _69 nft_item_code
       save_data INLINECALLDICT
-    }>	//  nft_item_code mint_price next_item_index in_msg_body owner_address jwallet_address
-    6 BLKDROP	// 
-    16 PUSHPOW2DEC	//  _69=65535
+    }>	//  nft_item_code mint_price op query_id in_msg_body owner_address jwallet_address next_item_index
+    DROP
+    s5 POP
+    s5 POP	//  owner_address jwallet_address op query_id in_msg_body
+    s0 s2 XCHG	//  owner_address jwallet_address in_msg_body query_id op
+    5 EQINT	//  owner_address jwallet_address in_msg_body query_id _73
+    IFJMP:<{	//  owner_address jwallet_address in_msg_body query_id
+      SWAP	//  owner_address jwallet_address query_id in_msg_body
+      LDVARUINT16	//  owner_address jwallet_address query_id amount in_msg_body
+      LDOPTREF	//  owner_address jwallet_address query_id amount _152 _151
+      DROP	//  owner_address jwallet_address query_id amount custom_payload
+      FALSE	//  owner_address jwallet_address query_id amount custom_payload _81
+      260734629 PUSHINT	//  owner_address jwallet_address query_id amount custom_payload _81 _82=260734629
+      NEWC	//  owner_address jwallet_address query_id amount custom_payload _81 _82=260734629 _83
+      32 STU	//  owner_address jwallet_address query_id amount custom_payload _81 _85
+      s1 s4 XCHG	//  owner_address jwallet_address _81 amount custom_payload query_id _85
+      64 STU	//  owner_address jwallet_address _81 amount custom_payload _87
+      ROT	//  owner_address jwallet_address _81 custom_payload _87 amount
+      STVARUINT16	//  owner_address jwallet_address _81 custom_payload _88
+      s4 PUSH	//  owner_address jwallet_address _81 custom_payload _88 owner_address
+      STSLICER	//  owner_address jwallet_address _81 custom_payload _89
+      s0 s4 XCHG2	//  custom_payload jwallet_address _81 _89 owner_address
+      STSLICER	//  custom_payload jwallet_address _81 _90
+      s1 s3 XCHG	//  _81 jwallet_address custom_payload _90
+      STOPTREF	//  _81 jwallet_address _91
+      0 PUSHINT	//  _81 jwallet_address _91 _92=0
+      STVARUINT16	//  _81 jwallet_address _93
+      s1 s2 XCHG	//  jwallet_address _81 _93
+      1 STI	//  jwallet_address _95
+      ENDC	//  jwallet_address _96
+      1 PUSHINT	//  jwallet_address _96 _97=1
+      24 PUSHINT	//  jwallet_address _96 _97=1 _98=24
+      NEWC	//  jwallet_address _96 _97=1 _98=24 _99
+      6 STU	//  jwallet_address _96 _97=1 _101
+      s0 s3 XCHG2	//  _97=1 _96 _101 jwallet_address
+      STSLICER	//  _97=1 _96 _102
+      0 PUSHINT	//  _97=1 _96 _102 _103=0
+      STVARUINT16	//  _97=1 _96 _104
+      s1 s2 XCHG	//  _96 _97=1 _104
+      107 STU	//  _96 _118
+      STREF	//  msg
+      ENDC	//  _120
+      64 PUSHINT	//  _120 _121=64
+      SENDRAWMSG
+    }>	//  owner_address jwallet_address in_msg_body query_id
+    4 BLKDROP	// 
+    16 PUSHPOW2DEC	//  _123=65535
     THROWANY
   }>
   get_collection_data PROC:<{

@@ -17,7 +17,7 @@ first-line constant collection-base
 
 <b
   owner-addr Addr, // owner address
-  jwallet-addr Addr, // jetton wallet address
+  jwallet-addr Addr, // jetton wallet address (any, because it can be set only after/during deploy)
   0 64 u, // start nft index
   mint-price Gram,
 
@@ -27,4 +27,4 @@ first-line constant collection-base
   b> ref, // content cell
 
   nft_code ref, // nft code
-b> boc>B Bx. cr
+b> dup boc>B Bx. cr
